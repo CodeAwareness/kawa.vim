@@ -68,26 +68,42 @@ end
 function M.on_buf_enter()
   local bufnr = vim.api.nvim_get_current_buf()
   local util = require('code-awareness.util')
+  local config = require('code-awareness.config')
 
   if not util.is_normal_buffer(bufnr) then
     return
   end
 
-  -- TODO: Implement active path update in Phase 2
+  if not config.get('send_on_buffer_enter') then
+    return
+  end
+
   util.log.debug('BufEnter: ' .. vim.api.nvim_buf_get_name(bufnr))
+
+  -- Send active path update (debounced)
+  local active = require('code-awareness.active')
+  active.send_update_debounced(bufnr)
 end
 
 --- Handle BufWritePost event
 function M.on_buf_write()
   local bufnr = vim.api.nvim_get_current_buf()
   local util = require('code-awareness.util')
+  local config = require('code-awareness.config')
 
   if not util.is_normal_buffer(bufnr) then
     return
   end
 
-  -- TODO: Implement active path update in Phase 2
+  if not config.get('send_on_save') then
+    return
+  end
+
   util.log.debug('BufWritePost: ' .. vim.api.nvim_buf_get_name(bufnr))
+
+  -- Send active path update (immediate)
+  local active = require('code-awareness.active')
+  active.send_update(bufnr)
 end
 
 --- Handle BufDelete event

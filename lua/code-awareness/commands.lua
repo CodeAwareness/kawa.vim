@@ -57,8 +57,18 @@ end
 
 --- Refresh current buffer
 function M.refresh()
-  -- TODO: Implement in Phase 2
-  vim.notify('[code-awareness] Refresh not yet implemented', vim.log.levels.WARN)
+  local ca = require('code-awareness')
+
+  if not ca.is_enabled() then
+    vim.notify('[code-awareness] Not enabled', vim.log.levels.WARN)
+    return
+  end
+
+  local bufnr = vim.api.nvim_get_current_buf()
+  local active = require('code-awareness.active')
+
+  active.send_update(bufnr)
+  vim.notify('[code-awareness] Refreshing...', vim.log.levels.INFO)
 end
 
 --- Clear all highlights

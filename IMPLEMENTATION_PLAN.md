@@ -185,10 +185,8 @@ This document outlines the phased implementation plan for kawa.vim, the Vim/Neov
 
 #### 2.1 Highlight Manager (`lua/code-awareness/highlight.lua`)
 - [ ] Create namespace: `vim.api.nvim_create_namespace('code_awareness')`
-- [ ] Define highlight groups:
-  - `CodeAwarenessModified`
-  - `CodeAwarenessPeer`
-  - `CodeAwarenessConflict`
+- [ ] Define highlight group:
+  - `CodeAwarenessHighlight`
 - [ ] Implement `init_colors(theme)` function
   - Set colors based on `vim.o.background`
   - Support custom colors from config
@@ -210,7 +208,7 @@ This document outlines the phased implementation plan for kawa.vim, the Vim/Neov
 - [ ] Implement `set_active_buffer(bufnr, filepath, project)`
 - [ ] Implement `get_active_buffer()`
 - [ ] Implement `set_highlights(bufnr, highlight_data)`
-  - Store `modified`, `peer`, `conflict` line arrays
+  - Store array of line numbers to highlight
 - [ ] Implement `get_highlights(bufnr)`
 - [ ] Implement `set_peers(peer_data)`
 - [ ] Implement `get_peers()`
@@ -261,7 +259,7 @@ This document outlines the phased implementation plan for kawa.vim, the Vim/Neov
 
 **Acceptance Criteria**:
 - [ ] Opening a file sends `active-path` request
-- [ ] Highlights appear on lines with changes/peer edits
+- [ ] Highlights appear on specified lines from API
 - [ ] Correct colors for light and dark themes
 - [ ] Highlights persist across buffer switches
 - [ ] Saving file updates highlights
@@ -283,7 +281,7 @@ This document outlines the phased implementation plan for kawa.vim, the Vim/Neov
   - Auth status
   - Active file
   - Peer count
-  - Conflict count
+  - Highlight count
   - Display in floating window or echo
 - [ ] Implement `show_error(message)` function
   - Use `vim.notify()` or `vim.api.nvim_err_writeln()`
@@ -296,9 +294,8 @@ This document outlines the phased implementation plan for kawa.vim, the Vim/Neov
 #### 3.2 Statusline Integration
 - [ ] Implement `get_statusline_component()` function
   - Return string for statusline
-  - Format: `"✓"` (connected) or `"✗"` (disconnected)
+  - Format: `"✓ CA"` (connected) or `"✗ CA"` (disconnected)
   - Show peer count if > 0
-  - Show conflict count if > 0
 - [ ] Add example for `lualine.nvim`
 - [ ] Add example for native statusline
 

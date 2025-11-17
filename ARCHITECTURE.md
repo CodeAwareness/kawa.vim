@@ -6,7 +6,7 @@
 Code Awareness for Vim/Neovim is a real-time collaboration extension that provides early warning of merge conflicts and instant code navigation for team members' changes. It highlights code intersections between your working copy and teammates' work before commits or pushes occur.
 
 ### Goals
-- **Real-time awareness**: Show modified lines, peer changes, and conflict zones
+- **Real-time awareness**: Highlight lines being worked on by you or your team
 - **Non-blocking**: All IPC and highlighting operations must be asynchronous
 - **Low overhead**: Minimal impact on editor performance
 - **Cross-platform**: Support Linux, macOS, and Windows
@@ -108,11 +108,7 @@ The architecture mirrors kawa.emacs but adapts to Vim/Neovim's event model and a
     project_root = <string>
   },
   highlights = {
-    [bufnr] = {
-      modified = { line_numbers... },
-      peer = { line_numbers... },
-      conflict = { line_numbers... }
-    }
+    [bufnr] = { line_numbers... }  -- Array of highlighted line numbers
   },
   peers = {
     [peer_id] = { name, avatar, ... }
@@ -247,12 +243,7 @@ All messages are JSON objects delimited by form-feed character (`\f` / `0x0C`):
   "domain": "code",
   "action": "active-path",
   "data": {
-    "hl": [0, 5, 10, 15],  // 0-based modified lines
-    "peer": {
-      "alice@example.com": [3, 4, 5],
-      "bob@example.com": [10, 11]
-    },
-    "conflict": [5, 10]  // Lines modified by both
+    "hl": [0, 5, 10, 15]  // 0-based line numbers to highlight
   }
 }
 ```
@@ -268,7 +259,7 @@ local ns_id = vim.api.nvim_create_namespace('code_awareness')
 
 -- Apply highlight to line
 vim.api.nvim_buf_set_extmark(bufnr, ns_id, line_nr - 1, 0, {
-  hl_group = 'CodeAwarenessModified',
+  hl_group = 'CodeAwarenessHighlight',
   hl_eol = true,  -- Extend to end of line
   hl_mode = 'combine',
   priority = 100,
@@ -282,7 +273,7 @@ vim.api.nvim_buf_clear_namespace(bufnr, ns_id, 0, -1)
 **Advantages**:
 - Native to Neovim, very efficient
 - Automatically handles line insertions/deletions
-- Supports virtual text for peer names/avatars
+- Supports virtual text for future enhancements
 - `hl_eol` extends highlight to full line width
 
 ### Vim Implementation (Text Properties)
@@ -291,17 +282,17 @@ Fallback for Vim 8.2+:
 
 ```vim
 " Define property type
-call prop_type_add('code_awareness_modified', {'highlight': 'CodeAwarenessModified'})
+call prop_type_add('code_awareness_highlight', {'highlight': 'CodeAwarenessHighlight'})
 
 " Apply to line
 call prop_add(line_nr, 1, {
-  \ 'type': 'code_awareness_modified',
+  \ 'type': 'code_awareness_highlight',
   \ 'length': 0,
   \ 'end_lnum': line_nr + 1
   \ })
 
 " Clear all properties
-call prop_remove({'type': 'code_awareness_modified', 'all': 1}, 1, line('$'))
+call prop_remove({'type': 'code_awareness_highlight', 'all': 1}, 1, line('$'))
 ```
 
 **Fallback**: If text properties unavailable, use signs in gutter (less intrusive but visible).
@@ -310,14 +301,10 @@ call prop_remove({'type': 'code_awareness_modified', 'all': 1}, 1, line('$'))
 
 ```vim
 " Light theme
-hi CodeAwarenessModified guibg=#00b1a420 ctermbg=23
-hi CodeAwarenessPeer guibg=#ffdd34 ctermbg=220
-hi CodeAwarenessConflict guibg=#ffc000 ctermbg=214
+hi CodeAwarenessHighlight guibg=#00b1a420 ctermbg=23
 
 " Dark theme
-hi CodeAwarenessModified guibg=#03445f ctermbg=24
-hi CodeAwarenessPeer guibg=#1f1cc2 ctermbg=20
-hi CodeAwarenessConflict guibg=#141299 ctermbg=18
+hi CodeAwarenessHighlight guibg=#03445f ctermbg=24
 ```
 
 Theme detection:
@@ -394,19 +381,10 @@ end
     style = 'extmark',  -- 'extmark', 'textprop', 'sign'
     intensity = 0.3,
     full_width = true,
-    show_peer_names = true,
 
     colors = {
-      light = {
-        modified = '#00b1a420',
-        peer = '#ffdd34',
-        conflict = '#ffc000'
-      },
-      dark = {
-        modified = '#03445f',
-        peer = '#1f1cc2',
-        conflict = '#141299'
-      }
+      light = '#00b1a420',
+      dark = '#03445f'
     }
   },
 
@@ -422,8 +400,7 @@ end
   -- UI settings
   statusline = {
     enabled = true,
-    show_peer_count = true,
-    show_conflict_count = true
+    show_peer_count = true
   }
 }
 ```
@@ -436,9 +413,7 @@ require('code-awareness').setup({
   highlight = {
     intensity = 0.5,
     colors = {
-      dark = {
-        modified = '#004466'  -- Custom color
-      }
+      dark = '#004466'  -- Custom color
     }
   },
   debug = true
@@ -625,7 +600,7 @@ end
 ```lua
 -- Neovim: extmarks handle this automatically
 vim.api.nvim_buf_set_extmark(bufnr, ns_id, line - 1, 0, {
-  hl_group = 'CodeAwarenessModified',
+  hl_group = 'CodeAwarenessHighlight',
   hl_eol = true
 })
 
@@ -679,14 +654,11 @@ require('lualine').setup({
 
         local state = ca.get_state()
         local peer_count = vim.tbl_count(state.peers)
-        local conflict_count = #state.highlights[vim.api.nvim_get_current_buf()].conflict
 
-        if conflict_count > 0 then
-          return string.format('⚠ %d conflicts', conflict_count)
-        elseif peer_count > 0 then
+        if peer_count > 0 then
           return string.format('👥 %d peers', peer_count)
         end
-        return '✓'
+        return '✓ CA'
       end
     }
   }

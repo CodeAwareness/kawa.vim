@@ -14,14 +14,14 @@ end
 
 --- Connect to a socket
 ---@param path string Socket path
----@param on_connect function Callback(err)
+---@param on_connect function Callback(err, pipe)
 ---@return table|nil pipe object or nil
 function M.connect(path, on_connect)
   local util = require('code-awareness.util')
   local pipe = M.new_pipe()
 
   if not pipe then
-    on_connect('Failed to create pipe')
+    on_connect('Failed to create pipe', nil)
     return nil
   end
 
@@ -35,10 +35,10 @@ function M.connect(path, on_connect)
     pipe:connect(path, function(err)
       if err then
         util.log.error('Socket connect error: ' .. err)
-        on_connect(err)
+        on_connect(err, nil)
       else
         util.log.debug('Socket connected: ' .. path)
-        on_connect(nil)
+        on_connect(nil, pipe)
       end
     end)
   else
@@ -46,10 +46,10 @@ function M.connect(path, on_connect)
     pipe:connect(path, function(err)
       if err then
         util.log.error('Socket connect error: ' .. err)
-        on_connect(err)
+        on_connect(err, nil)
       else
         util.log.debug('Socket connected: ' .. path)
-        on_connect(nil)
+        on_connect(nil, pipe)
       end
     end)
   end

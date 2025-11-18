@@ -16,7 +16,7 @@ local default_config = {
   catalog_name = 'catalog',
   socket_dir = vim.fn.expand('~/.kawa-code/sockets'),
   connection_timeout = 5000,
-  max_poll_attempts = 5,
+  max_poll_attempts = 10,
 
   -- Highlight settings
   highlight = {
@@ -85,11 +85,16 @@ function M.enable()
     util.log.info('Connected to Kawa Code')
     M._state.enabled = true
 
-    -- Set up autocommands
-    require('code-awareness.autocmds').setup()
+    vim.schedule(function()
+      -- Set up autocommands
+      require('code-awareness.autocmds').setup()
 
-    -- Initialize highlights
-    require('code-awareness.highlight').init()
+      -- Initialize highlights
+      require('code-awareness.highlight').init()
+
+      -- Initialize peer event handlers
+      require('code-awareness.peer').setup()
+    end)
   end)
 end
 

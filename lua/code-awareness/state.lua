@@ -8,8 +8,10 @@ local state = {
     file_path = nil,
     project_root = nil,
   },
+  project = nil,
   highlights = {},
   peers = {},
+  selected_peer = nil,
 }
 
 --- Set active buffer
@@ -40,6 +42,18 @@ function M.get_active_project_root()
   return state.active.project_root
 end
 
+--- Set active project metadata returned from server
+---@param project table|nil
+function M.set_active_project(project)
+  state.project = project
+end
+
+--- Get active project metadata
+---@return table|nil
+function M.get_active_project()
+  return state.project
+end
+
 --- Set highlights for a buffer
 ---@param bufnr number Buffer number
 ---@param line_numbers table Array of line numbers to highlight
@@ -64,6 +78,18 @@ end
 ---@return table
 function M.get_peers()
   return state.peers
+end
+
+--- Set selected peer
+---@param peer table|nil
+function M.set_selected_peer(peer)
+  state.selected_peer = peer
+end
+
+--- Get selected peer
+---@return table|nil
+function M.get_selected_peer()
+  return state.selected_peer
 end
 
 --- Clear buffer state

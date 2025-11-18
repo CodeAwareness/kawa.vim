@@ -8,7 +8,7 @@ M.DELIMITER = '\f'
 ---@param flow string 'req' or 'res' or 'err'
 ---@param domain string Message domain
 ---@param action string Message action
----@param data table Message data
+---@param data table|string|nil Message data (can be table, string, or nil)
 ---@param caw_id string|nil Client GUID
 ---@return string JSON string with delimiter
 function M.encode_message(flow, domain, action, data, caw_id)

@@ -109,6 +109,8 @@ For architecture details, see [ARCHITECTURE.md](ARCHITECTURE.md).
 
 For implementation plan, see [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md).
 
+For development and contributing, see [DEVELOPMENT.md](DEVELOPMENT.md).
+
 ## Development Status
 
 🚧 **Work in Progress** 🚧

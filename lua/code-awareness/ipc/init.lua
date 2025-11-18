@@ -5,6 +5,7 @@ local M = {}
 local state = {
   connected = false,
   client_guid = nil,
+  temp_guid = nil,  -- Temporary GUID used for registration
   socket = nil,
   parser = nil,
   poll_attempts = 0,
@@ -25,8 +26,12 @@ function M.connect(callback)
 
   util.log.info('Starting IPC connection process')
 
+  -- Generate temporary GUID for registration
+  state.temp_guid = util.generate_guid()
+  util.log.debug('Generated temporary GUID: ' .. state.temp_guid)
+
   -- Step 1: Register with catalog to get client GUID
-  catalog.register_client(function(err, client_guid)
+  catalog.register_client(state.temp_guid, function(err, client_guid)
     if err then
       callback(err)
       return
@@ -88,13 +93,18 @@ function M.connect_to_client_socket(socket_path, callback)
   local socket = require('code-awareness.ipc.socket')
   local protocol = require('code-awareness.ipc.protocol')
 
-  local pipe = socket.connect(socket_path, function(err)
+  local pipe = socket.connect(socket_path, function(err, connected_pipe)
     if err then
       callback(err)
       return
     end
 
-    state.socket = pipe
+    if not connected_pipe then
+      callback('Pipe is nil after connection')
+      return
+    end
+
+    state.socket = connected_pipe
     state.parser = protocol.create_parser()
     state.connected = true
 
@@ -198,6 +208,7 @@ function M.disconnect()
 
   state.connected = false
   state.client_guid = nil
+  state.temp_guid = nil
   state.socket = nil
   state.parser = nil
   state.poll_attempts = 0

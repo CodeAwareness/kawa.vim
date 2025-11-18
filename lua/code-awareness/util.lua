@@ -5,6 +5,9 @@ local M = {}
 local log_buffer = {}
 local log_max_size = 100
 
+-- Seed RNG once for GUID generation
+math.randomseed(os.time() + vim.loop.hrtime())
+
 -- Log levels
 local LOG_LEVELS = {
   DEBUG = 1,
@@ -61,14 +64,18 @@ end
 ---@param message string
 function M.log.warn(message)
   add_to_buffer('WARN', message)
-  vim.notify('[code-awareness] ' .. message, vim.log.levels.WARN)
+  vim.schedule(function()
+    vim.notify('[code-awareness] ' .. message, vim.log.levels.WARN)
+  end)
 end
 
 --- Log error message
 ---@param message string
 function M.log.error(message)
   add_to_buffer('ERROR', message)
-  vim.notify('[code-awareness] ' .. message, vim.log.levels.ERROR)
+  vim.schedule(function()
+    vim.notify('[code-awareness] ' .. message, vim.log.levels.ERROR)
+  end)
 end
 
 --- Get log buffer
@@ -145,6 +152,14 @@ function M.is_normal_buffer(bufnr)
   end
 
   return true
+end
+
+--- Generate a unique temporary GUID for this Neovim instance
+---@return string GUID string (format: "pid-random")
+function M.generate_guid()
+  local pid = vim.fn.getpid()
+  local random = math.random(1000000)
+  return string.format('%d-%d', pid, random)
 end
 
 return M

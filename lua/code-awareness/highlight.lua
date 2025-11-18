@@ -34,43 +34,59 @@ end
 ---@param bufnr number Buffer number
 ---@param line_numbers table Array of line numbers (1-based)
 function M.apply_highlights(bufnr, line_numbers)
-  if not ns_id then
-    M.init()
-  end
+  local function apply()
+    if not ns_id then
+      M.init()
+    end
 
-  if not vim.api.nvim_buf_is_valid(bufnr) then
-    return
-  end
+    if not vim.api.nvim_buf_is_valid(bufnr) then
+      return
+    end
 
-  -- Clear existing highlights
-  M.clear_highlights(bufnr)
+    -- Clear existing highlights
+    M.clear_highlights(bufnr)
 
-  -- Apply new highlights
-  for _, line_nr in ipairs(line_numbers) do
-    if line_nr > 0 then
-      local ok = pcall(vim.api.nvim_buf_set_extmark, bufnr, ns_id, line_nr - 1, 0, {
-        hl_group = 'CodeAwarenessHighlight',
-        hl_eol = true,
-        hl_mode = 'combine',
-        priority = 100,
-        strict = false,
-      })
+    -- Apply new highlights
+    for _, line_nr in ipairs(line_numbers) do
+      if line_nr > 0 then
+        local ok = pcall(vim.api.nvim_buf_set_extmark, bufnr, ns_id, line_nr - 1, 0, {
+          hl_group = 'CodeAwarenessHighlight',
+          hl_eol = true,
+          hl_mode = 'combine',
+          priority = 100,
+          strict = false,
+        })
 
-      if not ok then
-        -- Line number out of range, skip
+        if not ok then
+          -- Line number out of range, skip
+        end
       end
     end
+  end
+
+  if vim.in_fast_event() then
+    vim.schedule(apply)
+  else
+    apply()
   end
 end
 
 --- Clear highlights from a buffer
 ---@param bufnr number Buffer number
 function M.clear_highlights(bufnr)
-  if not ns_id or not vim.api.nvim_buf_is_valid(bufnr) then
-    return
+  local function clear()
+    if not ns_id or not vim.api.nvim_buf_is_valid(bufnr) then
+      return
+    end
+
+    vim.api.nvim_buf_clear_namespace(bufnr, ns_id, 0, -1)
   end
 
-  vim.api.nvim_buf_clear_namespace(bufnr, ns_id, 0, -1)
+  if vim.in_fast_event() then
+    vim.schedule(clear)
+  else
+    clear()
+  end
 end
 
 --- Clear all highlights from all buffers

@@ -51,10 +51,10 @@ function M.send_update(bufnr)
   -- Update state
   state.set_active_buffer(bufnr, filepath, project_root)
 
-  -- Send active-path message
+  -- Send active-path message (match VSCode/Emacs payload)
   local data = {
-    path = filepath,
-    content = content,
+    fpath = filepath,
+    doc = content,
     project = project_root,
     cursor = cursor_data,
   }
@@ -65,6 +65,11 @@ function M.send_update(bufnr)
     if message.flow == 'err' then
       util.log.error('active-path error: ' .. vim.inspect(response_data))
       return
+    end
+
+    -- Persist project metadata for future requests (peer diffs, etc.)
+    if response_data then
+      state.set_active_project(response_data)
     end
 
     -- Extract highlight data
@@ -87,7 +92,7 @@ function M.send_update(bufnr)
     -- Update state
     state.set_highlights(bufnr, line_numbers)
 
-    -- Apply highlights
+    -- Apply highlights on main loop to avoid fast-event errors
     local highlight = require('code-awareness.highlight')
     highlight.apply_highlights(bufnr, line_numbers)
   end)

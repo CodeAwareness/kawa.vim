@@ -2,8 +2,9 @@
 local M = {}
 
 --- Register client with catalog to get client GUID
+---@param temp_guid string Temporary GUID for registration
 ---@param callback function Callback(err, client_guid)
-function M.register_client(callback)
+function M.register_client(temp_guid, callback)
   local util = require('code-awareness.util')
   local socket = require('code-awareness.ipc.socket')
   local protocol = require('code-awareness.ipc.protocol')
@@ -19,82 +20,38 @@ function M.register_client(callback)
   end
 
   -- Connect to catalog
-  local pipe = socket.connect(catalog_path, function(err)
+  local pipe = socket.connect(catalog_path, function(err, connected_pipe)
     if err then
       callback('Failed to connect to catalog: ' .. err, nil)
       return
     end
 
-    -- Create message parser
-    local parser = protocol.create_parser()
-    local response_received = false
+    if not connected_pipe then
+      callback('Pipe is nil after connection', nil)
+      return
+    end
 
-    -- Set up read handler
-    socket.read_start(pipe, function(read_err, chunk)
-      if read_err then
-        if not response_received then
-          socket.close(pipe)
-          callback('Read error: ' .. read_err, nil)
-        end
-        return
-      end
+    local active_pipe = connected_pipe
 
-      if not chunk then
-        -- EOF
-        if not response_received then
-          socket.close(pipe)
-          callback('Connection closed before receiving response', nil)
-        end
-        return
-      end
+    -- Send clientId request with temporary GUID in data and caw fields
+    local request = protocol.encode_message('req', '*', 'clientId', temp_guid, temp_guid)
 
-      -- Feed chunk to parser
-      parser:feed(chunk)
-
-      -- Try to extract message
-      local message, parse_err = parser:next_message()
-
-      if parse_err then
-        socket.close(pipe)
-        callback('Parse error: ' .. parse_err, nil)
-        return
-      end
-
-      if message then
-        response_received = true
-
-        -- Close catalog connection
-        socket.close(pipe)
-
-        -- Extract client GUID
-        if message.flow == 'res' and message.action == 'clientId' then
-          local client_guid = message.data and message.data.clientId
-
-          if client_guid then
-            util.log.info('Registered with catalog, client GUID: ' .. client_guid)
-            callback(nil, client_guid)
-          else
-            callback('No clientId in response', nil)
-          end
-        else
-          callback('Unexpected response from catalog', nil)
-        end
-      end
-    end)
-
-    -- Send clientId request
-    local request = protocol.encode_message('req', '*', 'clientId', {})
-
-    socket.write(pipe, request, function(write_err)
+    socket.write(active_pipe, request, function(write_err)
       if write_err then
-        socket.close(pipe)
+        socket.close(active_pipe)
         callback('Write error: ' .. write_err, nil)
+        return
       end
+
+      util.log.info('Registered with catalog using GUID: ' .. temp_guid)
+      socket.close(active_pipe)
+      callback(nil, temp_guid)
     end)
   end)
 
   if not pipe then
     callback('Failed to create pipe', nil)
+    return
   end
 end
 

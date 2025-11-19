@@ -17,27 +17,27 @@ end
 ---@param on_connect function Callback(err, pipe)
 ---@return table|nil pipe object or nil
 function M.connect(path, on_connect)
-  local util = require('code-awareness.util')
+  local util = require("code-awareness.util")
   local pipe = M.new_pipe()
 
   if not pipe then
-    on_connect('Failed to create pipe', nil)
+    on_connect("Failed to create pipe", nil)
     return nil
   end
 
-  util.log.debug('Connecting to socket: ' .. path)
+  util.log.debug("Connecting to socket: " .. path)
 
   -- Determine if this is a Unix socket or named pipe
-  local is_windows = vim.fn.has('win32') == 1
+  local is_windows = vim.fn.has("win32") == 1
 
   if is_windows then
     -- Windows named pipe
     pipe:connect(path, function(err)
       if err then
-        util.log.error('Socket connect error: ' .. err)
+        util.log.error("Socket connect error: " .. err)
         on_connect(err, nil)
       else
-        util.log.debug('Socket connected: ' .. path)
+        util.log.debug("Socket connected: " .. path)
         on_connect(nil, pipe)
       end
     end)
@@ -45,10 +45,10 @@ function M.connect(path, on_connect)
     -- Unix socket
     pipe:connect(path, function(err)
       if err then
-        util.log.error('Socket connect error: ' .. err)
+        util.log.error("Socket connect error: " .. err)
         on_connect(err, nil)
       else
-        util.log.debug('Socket connected: ' .. path)
+        util.log.debug("Socket connected: " .. path)
         on_connect(nil, pipe)
       end
     end)
@@ -64,7 +64,7 @@ end
 function M.write(pipe, data, callback)
   if not pipe then
     if callback then
-      callback('Pipe is nil')
+      callback("Pipe is nil")
     end
     return
   end
@@ -77,7 +77,7 @@ end
 ---@param on_data function Callback(err, chunk)
 function M.read_start(pipe, on_data)
   if not pipe then
-    on_data('Pipe is nil', nil)
+    on_data("Pipe is nil", nil)
     return
   end
 
@@ -116,7 +116,7 @@ end
 ---@param path string Socket path
 ---@return boolean
 function M.exists(path)
-  local is_windows = vim.fn.has('win32') == 1
+  local is_windows = vim.fn.has("win32") == 1
 
   if is_windows then
     -- For Windows named pipes, we can't easily check existence

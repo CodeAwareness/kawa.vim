@@ -13,20 +13,20 @@ local default_config = {
   debug = false,
 
   -- IPC settings
-  catalog_name = 'catalog',
-  socket_dir = vim.fn.expand('~/.kawa-code/sockets'),
+  catalog_name = "catalog",
+  socket_dir = vim.fn.expand("~/.kawa-code/sockets"),
   connection_timeout = 5000,
   max_poll_attempts = 10,
 
   -- Highlight settings
   highlight = {
     enabled = true,
-    style = 'extmark',
+    style = "extmark",
     intensity = 0.3,
     full_width = true,
     colors = {
-      light = '#00b1a420',
-      dark = '#03445f',
+      light = "#00b1a420",
+      dark = "#03445f",
     },
   },
 
@@ -36,8 +36,8 @@ local default_config = {
   send_on_buffer_enter = true,
 
   -- Diff settings
-  diff_tool = 'diffthis',
-  diff_layout = 'vertical',
+  diff_tool = "diffthis",
+  diff_layout = "vertical",
 
   -- UI settings
   statusline = {
@@ -52,13 +52,13 @@ function M.setup(user_config)
   user_config = user_config or {}
 
   -- Merge user config with defaults
-  local config = require('code-awareness.config')
-  config.set(vim.tbl_deep_extend('force', default_config, user_config))
+  local config = require("code-awareness.config")
+  config.set(vim.tbl_deep_extend("force", default_config, user_config))
 
   M._state.initialized = true
 
   -- Auto-enable if configured
-  if config.get('enabled') then
+  if config.get("enabled") then
     M.enable()
   end
 end
@@ -69,31 +69,31 @@ function M.enable()
     return
   end
 
-  local config = require('code-awareness.config')
-  local util = require('code-awareness.util')
+  local config = require("code-awareness.config")
+  local util = require("code-awareness.util")
 
-  util.log.info('Enabling Code Awareness')
+  util.log.info("Enabling Code Awareness")
 
   -- Initialize IPC connection
-  local ipc = require('code-awareness.ipc')
+  local ipc = require("code-awareness.ipc")
   ipc.connect(function(err)
     if err then
-      util.log.error('Failed to connect to Kawa Code: ' .. err)
+      util.log.error("Failed to connect to Kawa Code: " .. err)
       return
     end
 
-    util.log.info('Connected to Kawa Code')
+    util.log.info("Connected to Kawa Code")
     M._state.enabled = true
 
     vim.schedule(function()
       -- Set up autocommands
-      require('code-awareness.autocmds').setup()
+      require("code-awareness.autocmds").setup()
 
       -- Initialize highlights
-      require('code-awareness.highlight').init()
+      require("code-awareness.highlight").init()
 
       -- Initialize peer event handlers
-      require('code-awareness.peer').setup()
+      require("code-awareness.peer").setup()
     end)
   end)
 end
@@ -104,18 +104,18 @@ function M.disable()
     return
   end
 
-  local util = require('code-awareness.util')
-  util.log.info('Disabling Code Awareness')
+  local util = require("code-awareness.util")
+  util.log.info("Disabling Code Awareness")
 
   -- Clear all highlights
-  require('code-awareness.highlight').clear_all()
+  require("code-awareness.highlight").clear_all()
 
   -- Disconnect IPC
-  local ipc = require('code-awareness.ipc')
+  local ipc = require("code-awareness.ipc")
   ipc.disconnect()
 
   -- Remove autocommands
-  require('code-awareness.autocmds').teardown()
+  require("code-awareness.autocmds").teardown()
 
   M._state.enabled = false
 end
@@ -138,7 +138,7 @@ end
 --- Get current state
 ---@return table
 function M.get_state()
-  return require('code-awareness.state').get_all()
+  return require("code-awareness.state").get_all()
 end
 
 --- Called on VimEnter

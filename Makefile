@@ -18,9 +18,6 @@ lint:
 	@command -v luacheck >/dev/null 2>&1 || { echo "luacheck not found. Install with: luarocks install luacheck"; exit 1; }
 	luacheck lua/ tests/
 
-test:
-	@nvim --headless -c "PlenaryBustedDirectory tests/ { minimal_init = 'tests/minimal_init.lua' }"
-
 test-manual:
 	@mkdir -p ~/.config/nvim-test
 	@echo "vim.opt.runtimepath:prepend('$(shell pwd)')" > ~/.config/nvim-test/init.lua

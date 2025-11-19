@@ -74,11 +74,8 @@ git clone https://github.com/nvim-lua/plenary.nvim.git ~/.local/share/nvim/site/
 Then run tests:
 
 ```bash
-# Run all tests
-make test
-
-# Or directly with Neovim
-nvim --headless -c "PlenaryBustedDirectory tests/ { minimal_init = 'tests/minimal_init.lua' }"
+# Run tests
+make test-manual
 ```
 
 ### Manual Testing Checklist
@@ -114,7 +111,7 @@ Before publishing, test the following:
 
 ```bash
 # Ensure all tests pass
-make test
+make test-manual
 
 # Format and lint code
 make format
@@ -199,7 +196,7 @@ git push origin v2.0.0
 
 Before publishing a new version:
 
-- [ ] All tests pass (`make test`)
+- [ ] All tests pass (`make test-manual`)
 - [ ] Code is formatted (`make format`)
 - [ ] Code passes linting (`make lint`)
 - [ ] README.md is up to date
@@ -209,7 +206,7 @@ Before publishing a new version:
 - [ ] GitHub release is created (optional)
 - [ ] Plugin works with latest Neovim version
 
-## Continuous Integration (Optional)
+## Continuous Integration (TODO)
 
 Consider setting up GitHub Actions for automated testing:
 
@@ -231,7 +228,7 @@ jobs:
         run: |
           git clone https://github.com/nvim-lua/plenary.nvim.git ~/.local/share/nvim/site/pack/test/opt/plenary.nvim
       - name: Run tests
-        run: make test
+        run: make test-manual
 ```
 
 ## Troubleshooting

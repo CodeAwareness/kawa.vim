@@ -107,15 +107,7 @@ See `:help code-awareness` for full documentation.
 
 For architecture details, see [ARCHITECTURE.md](ARCHITECTURE.md).
 
-For implementation plan, see [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md).
-
 For development and contributing, see [DEVELOPMENT.md](DEVELOPMENT.md).
-
-## Development Status
-
-🚧 **Work in Progress** 🚧
-
-This plugin is currently under active development. Phase 1 (IPC) and Phase 2 (Highlighting) are in progress.
 
 ## License
 

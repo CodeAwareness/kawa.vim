@@ -25,28 +25,28 @@ The architecture mirrors kawa.emacs but adapts to Vim/Neovim's event model and a
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                    Vim/Neovim (Code Awareness Plugin)           │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐          │
-│  │  Highlight   │  │     State    │  │   Commands   │          │
-│  │   Manager    │  │   Manager    │  │   & UI       │          │
-│  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘          │
-│         │                  │                  │                  │
-│         └──────────────────┼──────────────────┘                  │
-│                            │                                     │
-│                   ┌────────▼────────┐                            │
-│                   │  Event Handler  │                            │
-│                   └────────┬────────┘                            │
-│                            │                                     │
-│                   ┌────────▼────────┐                            │
-│                   │  IPC Transport  │                            │
-│                   │   (Async I/O)   │                            │
-│                   └────────┬────────┘                            │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐           │
+│  │  Highlight   │  │     State    │  │   Commands   │           │
+│  │   Manager    │  │   Manager    │  │   & UI       │           │
+│  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘           │
+│         │                  │                  │                 │
+│         └──────────────────┼──────────────────┘                 │
+│                            │                                    │
+│                   ┌────────▼────────┐                           │
+│                   │  Event Handler  │                           │
+│                   └────────┬────────┘                           │
+│                            │                                    │
+│                   ┌────────▼────────┐                           │
+│                   │  IPC Transport  │                           │
+│                   │   (Async I/O)   │                           │
+│                   └────────┬────────┘                           │
 └────────────────────────────┼────────────────────────────────────┘
                              │ Unix Socket / Named Pipe
-                             │ (JSON over \f delimiter)
+                             │ (JSON payload)
                              │
 ┌────────────────────────────▼────────────────────────────────────┐
-│                  Code Awareness Desktop App                     │
-│                    (Kawa Code at ~/.kawa-code)                  │
+│                  Kawa Code Desktop App                          │
+│                  (settings and work temp in ~/.kawa-code)       │
 │  - Manages peer connections and authentication                  │
 │  - Provides file extraction and diff services                   │
 │  - Coordinates real-time change notifications                   │

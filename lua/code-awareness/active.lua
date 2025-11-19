@@ -62,40 +62,52 @@ function M.send_update(bufnr)
   util.log.debug('Sending active-path for: ' .. filepath)
 
   ipc.send('code', 'active-path', data, function(response_data, message)
-    if message.flow == 'err' then
-      util.log.error('active-path error: ' .. vim.inspect(response_data))
-      return
-    end
-
-    -- Persist project metadata for future requests (peer diffs, etc.)
-    if response_data then
-      state.set_active_project(response_data)
-    end
-
-    -- Extract highlight data
-    local hl_data = response_data.hl
-    if not hl_data then
-      util.log.debug('No highlight data in response')
-      return
-    end
-
-    -- Convert 0-based line numbers to 1-based
-    local line_numbers = {}
-    for _, line_nr in ipairs(hl_data) do
-      if type(line_nr) == 'number' then
-        table.insert(line_numbers, line_nr + 1)
+      if message.flow == 'err' then
+        util.log.error('active-path error: ' .. vim.inspect(response_data))
+        return
       end
-    end
 
-    util.log.debug(string.format('Received %d highlights for %s', #line_numbers, filepath))
+      util.log.debug('Received active-path response: ' .. vim.inspect(response_data))
 
-    -- Update state
-    state.set_highlights(bufnr, line_numbers)
+      -- Persist project metadata for future requests (peer diffs, etc.)
+      if response_data then
+        state.set_active_project(response_data)
+      end
 
-    -- Apply highlights on main loop to avoid fast-event errors
-    local highlight = require('code-awareness.highlight')
-    highlight.apply_highlights(bufnr, line_numbers)
-  end)
+      -- Extract highlight data
+      local hl_data = response_data and response_data.hl
+      if not hl_data then
+        util.log.debug('No highlight data (hl field) in response')
+        return
+      end
+
+      util.log.debug('hl_data type: ' .. type(hl_data) .. ', value: ' .. vim.inspect(hl_data))
+
+      -- Convert 0-based line numbers to 1-based
+      local line_numbers = {}
+      if type(hl_data) == 'table' then
+        for _, line_nr in ipairs(hl_data) do
+          if type(line_nr) == 'number' then
+            table.insert(line_numbers, line_nr + 1)
+          else
+            util.log.debug('Skipping non-numeric hl element: ' .. tostring(line_nr) .. ' (type: ' .. type(line_nr) .. ')')
+          end
+        end
+      else
+        util.log.warn('hl_data is not a table: ' .. type(hl_data))
+        return
+      end
+
+      util.log.info(string.format('Received %d highlights for %s (lines: %s)', 
+        #line_numbers, filepath, vim.inspect(line_numbers)))
+
+      -- Update state
+      state.set_highlights(bufnr, line_numbers)
+
+      -- Apply highlights on main loop to avoid fast-event errors
+      local highlight = require('code-awareness.highlight')
+      highlight.apply_highlights(bufnr, line_numbers)
+    end)
 end
 
 --- Send active path update with debouncing

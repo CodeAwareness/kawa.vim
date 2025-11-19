@@ -13,7 +13,7 @@ Real-time collaboration extension that highlights code intersections between you
 ## Requirements
 
 - **Neovim** 0.5.0 or higher (recommended: 0.8.0+)
-- **Vim** 8.2+ (limited support, Neovim recommended)
+- Support is planned for **Vim** 8.2+ -- currently not working
 - **Kawa Code** desktop app ([download here](https://code-awareness.com))
 
 ## Installation
@@ -56,11 +56,12 @@ EOF
 
 ## Quick Start
 
-1. Install the Kawa Code desktop app
+1. Install the Kawa Code desktop app and login
 2. Install this plugin using your package manager
 3. Open Neovim in a Git repository
 4. Plugin will automatically connect to Kawa Code
 5. Highlights will appear on lines you or your teammates are working on
+6. Kawa Code will display the contributors for that file, as well as other info
 
 ## Commands
 

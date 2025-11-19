@@ -110,26 +110,13 @@ function M.apply_highlights(bufnr, line_numbers, skip_color_init)
     for _, line_nr in ipairs(line_numbers) do
       if type(line_nr) == 'number' and line_nr > 0 and line_nr <= line_count then
         local extmark_line = line_nr - 1  -- Convert to 0-based for extmark API
-        
-        -- Use Emacs hl-line technique: span from start of current line to start of next line
-        -- This ensures full-width highlighting for both empty and non-empty lines
-        local end_line = extmark_line + 1  -- Next line (0-based)
-        
+
+        -- Use line_hl_group for full-width highlighting (like cursorline/vimdiff)
         local opts = {
-          hl_group = 'CodeAwarenessHighlight',
-          hl_mode = 'combine',
+          line_hl_group = 'CodeAwarenessHighlight',
           priority = 100,
           strict = false,
         }
-        
-        -- Always span to start of next line for full-width (works for all lines)
-        if end_line < line_count then
-          opts.end_line = end_line
-          opts.end_col = 0
-        else
-          -- Last line: can't span to next, so use hl_eol
-          opts.hl_eol = true
-        end
         
         util.log.debug(string.format('Setting extmark on line %d with opts: %s', line_nr, vim.inspect(opts)))
         

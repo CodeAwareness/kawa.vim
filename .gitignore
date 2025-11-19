@@ -1,0 +1,24 @@
+# Vim swap files
+*.swp
+*.swo
+*~
+.*.sw?
+
+# Neovim
+.nvim/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Lua
+*.luac
+
+# Test output
+.tests/
+
+# Doc tags
+doc/tags
+
+# Personal config
+.local/

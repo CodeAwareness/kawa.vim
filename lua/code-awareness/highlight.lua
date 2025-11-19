@@ -118,13 +118,10 @@ function M.apply_highlights(bufnr, line_numbers, skip_color_init)
           strict = false,
         }
 
-        util.log.debug(string.format("Setting extmark on line %d with opts: %s", line_nr, vim.inspect(opts)))
-
         local ok, err = pcall(vim.api.nvim_buf_set_extmark, bufnr, ns_id, extmark_line, 0, opts)
 
         if ok then
           applied_count = applied_count + 1
-          util.log.debug(string.format("Successfully set extmark on line %d (0-based: %d)", line_nr, extmark_line))
         else
           util.log.debug(string.format("Failed to set extmark on line %d: %s", line_nr, tostring(err)))
         end
@@ -140,12 +137,11 @@ function M.apply_highlights(bufnr, line_numbers, skip_color_init)
       end
     end
 
-    util.log.info(string.format("Applied %d/%d highlights to buffer %d", applied_count, #line_numbers, bufnr))
+    -- util.log.info(string.format("Applied %d/%d highlights to buffer %d", applied_count, #line_numbers, bufnr))
 
     -- Verify extmarks were created and log details
     if applied_count > 0 then
       local extmarks = vim.api.nvim_buf_get_extmarks(bufnr, ns_id, 0, -1, { details = true })
-      util.log.info(string.format("Verified: %d extmarks exist in buffer %d", #extmarks, bufnr))
 
       if #extmarks ~= applied_count then
         util.log.warn(string.format("Mismatch: Created %d extmarks but %d were requested", #extmarks, applied_count))
@@ -154,9 +150,9 @@ function M.apply_highlights(bufnr, line_numbers, skip_color_init)
       -- Log first few extmark details for debugging
       for i = 1, math.min(3, #extmarks) do
         local extmark = extmarks[i]
-        util.log.debug(
-          string.format("Extmark %d: line=%d, col=%d, details=%s", i, extmark[2], extmark[3], vim.inspect(extmark[4]))
-        )
+        -- util.log.debug(
+        --   string.format("Extmark %d: line=%d, col=%d, details=%s", i, extmark[2], extmark[3], vim.inspect(extmark[4]))
+        -- )
       end
     end
   end

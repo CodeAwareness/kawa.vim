@@ -142,12 +142,6 @@ function M.handle_peer_select(peer_data)
       doc = doc, -- File content
     }
 
-    util.log.info("Requesting peer diff:")
-    util.log.info("  fpath: " .. payload.fpath)
-    util.log.info("  origin: " .. payload.origin)
-    util.log.info("  peer._id: " .. payload.peer._id)
-    util.log.info("  doc length: " .. #doc)
-
     ipc.send("code", "diff-peer", payload, function(response_data, message)
       if message.flow == "err" then
         util.log.error("diff-peer error: " .. vim.inspect(response_data))

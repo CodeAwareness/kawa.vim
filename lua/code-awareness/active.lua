@@ -15,7 +15,7 @@ function M.send_update(bufnr)
 
   -- Check if this is a valid buffer
   if not util.is_normal_buffer(bufnr) then
-    util.log.debug("Skipping update for non-file buffer")
+    -- util.log.debug("Skipping update for non-file buffer")
     return
   end
 
@@ -67,7 +67,7 @@ function M.send_update(bufnr)
       return
     end
 
-    util.log.debug("Received active-path response: " .. vim.inspect(response_data))
+    util.log.debug(string.format("Received active-path response: %s:%s", message.domain, message.action))
 
     -- Persist project metadata for future requests (peer diffs, etc.)
     if response_data then
@@ -81,8 +81,6 @@ function M.send_update(bufnr)
       return
     end
 
-    util.log.debug("hl_data type: " .. type(hl_data) .. ", value: " .. vim.inspect(hl_data))
-
     -- Convert 0-based line numbers to 1-based
     local line_numbers = {}
     if type(hl_data) == "table" then
@@ -90,17 +88,13 @@ function M.send_update(bufnr)
         if type(line_nr) == "number" then
           table.insert(line_numbers, line_nr + 1)
         else
-          util.log.debug("Skipping non-numeric hl element: " .. tostring(line_nr) .. " (type: " .. type(line_nr) .. ")")
+          -- util.log.debug("Skipping non-numeric hl element: " .. tostring(line_nr) .. " (type: " .. type(line_nr) .. ")")
         end
       end
     else
-      util.log.warn("hl_data is not a table: " .. type(hl_data))
+      -- util.log.warn("hl_data is not a table: " .. type(hl_data))
       return
     end
-
-    util.log.info(
-      string.format("Received %d highlights for %s (lines: %s)", #line_numbers, filepath, vim.inspect(line_numbers))
-    )
 
     -- Update state
     state.set_highlights(bufnr, line_numbers)

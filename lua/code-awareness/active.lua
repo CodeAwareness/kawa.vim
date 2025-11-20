@@ -1,13 +1,16 @@
 -- Active path tracking for Code Awareness
 local M = {}
 
+-- Get platform implementation
+local platform = require("code-awareness.platform").get_impl()
+
 -- Debounce timer
 local update_timer = nil
 
 --- Send active path update to Kawa Code
 ---@param bufnr number|nil Buffer number (default: current buffer)
 function M.send_update(bufnr)
-  bufnr = bufnr or vim.api.nvim_get_current_buf()
+  bufnr = bufnr or platform.window.get_current_buf()
 
   local util = require("code-awareness.util")
   local state = require("code-awareness.state")
@@ -20,7 +23,7 @@ function M.send_update(bufnr)
   end
 
   -- Get file information
-  local filepath = vim.api.nvim_buf_get_name(bufnr)
+  local filepath = platform.buffer.get_name(bufnr)
   if not filepath or filepath == "" then
     return
   end
@@ -38,11 +41,11 @@ function M.send_update(bufnr)
   project_root = util.normalize_path(project_root)
 
   -- Get buffer content
-  local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
+  local lines = platform.buffer.get_lines(bufnr, 0, -1)
   local content = table.concat(lines, "\n")
 
   -- Get cursor position
-  local cursor = vim.api.nvim_win_get_cursor(0)
+  local cursor = platform.window.get_cursor()
   local cursor_data = {
     line = cursor[1],
     column = cursor[2],

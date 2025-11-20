@@ -1,6 +1,9 @@
 -- Autocommands for Code Awareness
 local M = {}
 
+-- Get platform implementation
+local platform = require("code-awareness.platform").get_impl()
+
 local augroup_id = nil
 
 --- Set up autocommands
@@ -9,10 +12,11 @@ function M.setup()
     return
   end
 
-  augroup_id = vim.api.nvim_create_augroup("CodeAwareness", { clear = true })
+  augroup_id = platform.autocmd.create_group("CodeAwareness")
 
   -- Buffer tracking
-  vim.api.nvim_create_autocmd("BufEnter", {
+  platform.autocmd.create({
+    event = "BufEnter",
     group = augroup_id,
     pattern = "*",
     callback = function()
@@ -21,7 +25,8 @@ function M.setup()
   })
 
   -- Save tracking
-  vim.api.nvim_create_autocmd("BufWritePost", {
+  platform.autocmd.create({
+    event = "BufWritePost",
     group = augroup_id,
     pattern = "*",
     callback = function()
@@ -30,16 +35,25 @@ function M.setup()
   })
 
   -- Buffer cleanup
-  vim.api.nvim_create_autocmd("BufDelete", {
+  platform.autocmd.create({
+    event = "BufDelete",
     group = augroup_id,
     pattern = "*",
-    callback = function(args)
-      M.on_buf_delete(args.buf)
+    callback = function()
+      -- Get buffer number - in Vim, we need to use vim.fn.expand
+      local bufnr
+      if vim.fn.has("nvim") == 1 then
+        bufnr = vim.fn.expand("<abuf>")
+      else
+        bufnr = vim.fn.expand("<abuf>")
+      end
+      M.on_buf_delete(tonumber(bufnr))
     end,
   })
 
   -- Theme change
-  vim.api.nvim_create_autocmd("ColorScheme", {
+  platform.autocmd.create({
+    event = "ColorScheme",
     group = augroup_id,
     pattern = "*",
     callback = function()
@@ -48,8 +62,10 @@ function M.setup()
   })
 
   -- Vim exit
-  vim.api.nvim_create_autocmd("VimLeavePre", {
+  platform.autocmd.create({
+    event = "VimLeavePre",
     group = augroup_id,
+    pattern = "*",
     callback = function()
       require("code-awareness").on_vim_leave()
     end,
@@ -59,14 +75,14 @@ end
 --- Teardown autocommands
 function M.teardown()
   if augroup_id then
-    vim.api.nvim_del_augroup_by_id(augroup_id)
+    platform.autocmd.delete_group(augroup_id)
     augroup_id = nil
   end
 end
 
 --- Handle BufEnter event
 function M.on_buf_enter()
-  local bufnr = vim.api.nvim_get_current_buf()
+  local bufnr = platform.window.get_current_buf()
   local util = require("code-awareness.util")
   local config = require("code-awareness.config")
 
@@ -78,7 +94,7 @@ function M.on_buf_enter()
     return
   end
 
-  util.log.debug("BufEnter: " .. vim.api.nvim_buf_get_name(bufnr))
+  util.log.debug("BufEnter: " .. platform.buffer.get_name(bufnr))
 
   -- Send active path update (debounced)
   local active = require("code-awareness.active")
@@ -87,7 +103,7 @@ end
 
 --- Handle BufWritePost event
 function M.on_buf_write()
-  local bufnr = vim.api.nvim_get_current_buf()
+  local bufnr = platform.window.get_current_buf()
   local util = require("code-awareness.util")
   local config = require("code-awareness.config")
 
@@ -99,7 +115,7 @@ function M.on_buf_write()
     return
   end
 
-  util.log.debug("BufWritePost: " .. vim.api.nvim_buf_get_name(bufnr))
+  util.log.debug("BufWritePost: " .. platform.buffer.get_name(bufnr))
 
   -- Send active path update (immediate)
   local active = require("code-awareness.active")

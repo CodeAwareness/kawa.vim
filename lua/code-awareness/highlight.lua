@@ -1,6 +1,9 @@
 -- Highlight management for Code Awareness
 local M = {}
 
+-- Get platform implementation
+local platform = require("code-awareness.platform").get_impl()
+
 -- Namespace for extmarks
 local ns_id = nil
 
@@ -10,7 +13,7 @@ function M.init()
     return
   end
 
-  ns_id = vim.api.nvim_create_namespace("code_awareness")
+  ns_id = platform.highlight.create_namespace("code_awareness")
 
   -- Define highlight groups
   M.init_colors()
@@ -65,7 +68,7 @@ function M.init_colors()
     hl_opts.blend = blend_value
   end
 
-  vim.api.nvim_set_hl(0, "CodeAwarenessHighlight", hl_opts)
+  platform.highlight.set_hl(ns_id, "CodeAwarenessHighlight", hl_opts)
 end
 
 --- Apply highlights to a buffer
@@ -85,7 +88,7 @@ function M.apply_highlights(bufnr, line_numbers, skip_color_init)
       M.init_colors()
     end
 
-    if not vim.api.nvim_buf_is_valid(bufnr) then
+    if not platform.buffer.is_valid(bufnr) then
       util.log.debug("Cannot apply highlights: invalid buffer " .. tostring(bufnr))
       return
     end
@@ -103,7 +106,7 @@ function M.apply_highlights(bufnr, line_numbers, skip_color_init)
     M.clear_highlights(bufnr)
 
     -- Get buffer line count for validation
-    local line_count = vim.api.nvim_buf_line_count(bufnr)
+    local line_count = platform.buffer.line_count(bufnr)
 
     -- Apply new highlights
     local applied_count = 0
@@ -118,12 +121,12 @@ function M.apply_highlights(bufnr, line_numbers, skip_color_init)
           strict = false,
         }
 
-        local ok, err = pcall(vim.api.nvim_buf_set_extmark, bufnr, ns_id, extmark_line, 0, opts)
+        local ok = platform.highlight.set_extmark(bufnr, ns_id, extmark_line, opts)
 
         if ok then
           applied_count = applied_count + 1
         else
-          util.log.debug(string.format("Failed to set extmark on line %d: %s", line_nr, tostring(err)))
+          util.log.debug(string.format("Failed to set extmark on line %d", line_nr))
         end
       else
         util.log.debug(
@@ -141,7 +144,7 @@ function M.apply_highlights(bufnr, line_numbers, skip_color_init)
 
     -- Verify extmarks were created and log details
     if applied_count > 0 then
-      local extmarks = vim.api.nvim_buf_get_extmarks(bufnr, ns_id, 0, -1, { details = true })
+      local extmarks = platform.highlight.get_extmarks(bufnr, ns_id)
 
       if #extmarks ~= applied_count then
         util.log.warn(string.format("Mismatch: Created %d extmarks but %d were requested", #extmarks, applied_count))
@@ -157,8 +160,8 @@ function M.apply_highlights(bufnr, line_numbers, skip_color_init)
     end
   end
 
-  if vim.in_fast_event() then
-    vim.schedule(apply)
+  if platform.util.in_fast_event() then
+    platform.util.schedule(apply)
   else
     apply()
   end
@@ -168,15 +171,15 @@ end
 ---@param bufnr number Buffer number
 function M.clear_highlights(bufnr)
   local function clear()
-    if not ns_id or not vim.api.nvim_buf_is_valid(bufnr) then
+    if not ns_id or not platform.buffer.is_valid(bufnr) then
       return
     end
 
-    vim.api.nvim_buf_clear_namespace(bufnr, ns_id, 0, -1)
+    platform.highlight.clear_namespace(bufnr, ns_id)
   end
 
-  if vim.in_fast_event() then
-    vim.schedule(clear)
+  if platform.util.in_fast_event() then
+    platform.util.schedule(clear)
   else
     clear()
   end
@@ -188,9 +191,9 @@ function M.clear_all()
     return
   end
 
-  for _, bufnr in ipairs(vim.api.nvim_list_bufs()) do
-    if vim.api.nvim_buf_is_valid(bufnr) then
-      vim.api.nvim_buf_clear_namespace(bufnr, ns_id, 0, -1)
+  for _, bufnr in ipairs(platform.buffer.list()) do
+    if platform.buffer.is_valid(bufnr) then
+      platform.highlight.clear_namespace(bufnr, ns_id)
     end
   end
 end
@@ -201,7 +204,7 @@ function M.refresh_colors()
 
   -- Reapply highlights to all buffers
   local state = require("code-awareness.state")
-  for _, bufnr in ipairs(vim.api.nvim_list_bufs()) do
+  for _, bufnr in ipairs(platform.buffer.list()) do
     local highlights = state.get_highlights(bufnr)
     if #highlights > 0 then
       M.apply_highlights(bufnr, highlights)

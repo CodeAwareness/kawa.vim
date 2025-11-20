@@ -1,12 +1,20 @@
 -- Utility functions for Code Awareness
 local M = {}
 
+-- Get platform implementation
+local platform = require("code-awareness.platform").get_impl()
+
 -- Log buffer (circular buffer of last 100 messages)
 local log_buffer = {}
 local log_max_size = 100
 
 -- Seed RNG once for GUID generation
-math.randomseed(os.time() + vim.loop.hrtime())
+-- Use hrtime if available (Neovim), otherwise just use time
+if vim.fn.has("nvim") == 1 and vim.loop then
+  math.randomseed(os.time() + vim.loop.hrtime())
+else
+  math.randomseed(os.time() * 1000 + os.clock() * 1000000)
+end
 
 -- Log levels
 local LOG_LEVELS = {
@@ -64,8 +72,8 @@ end
 ---@param message string
 function M.log.warn(message)
   add_to_buffer("WARN", message)
-  vim.schedule(function()
-    vim.notify("[code-awareness] " .. message, vim.log.levels.WARN)
+  platform.util.schedule(function()
+    platform.util.notify("[code-awareness] " .. message, platform.util.log_levels().WARN)
   end)
 end
 
@@ -73,8 +81,8 @@ end
 ---@param message string
 function M.log.error(message)
   add_to_buffer("ERROR", message)
-  vim.schedule(function()
-    vim.notify("[code-awareness] " .. message, vim.log.levels.ERROR)
+  platform.util.schedule(function()
+    platform.util.notify("[code-awareness] " .. message, platform.util.log_levels().ERROR)
   end)
 end
 
@@ -132,16 +140,16 @@ end
 ---@param bufnr number Buffer number
 ---@return boolean
 function M.is_normal_buffer(bufnr)
-  if not bufnr or not vim.api.nvim_buf_is_valid(bufnr) then
+  if not bufnr or not platform.buffer.is_valid(bufnr) then
     return false
   end
 
-  local buftype = vim.api.nvim_buf_get_option(bufnr, "buftype")
+  local buftype = platform.buffer.get_option(bufnr, "buftype")
   if buftype ~= "" then
     return false
   end
 
-  local filepath = vim.api.nvim_buf_get_name(bufnr)
+  local filepath = platform.buffer.get_name(bufnr)
   if not filepath or filepath == "" then
     return false
   end

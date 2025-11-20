@@ -13,8 +13,19 @@ Real-time collaboration extension that highlights code intersections between you
 ## Requirements
 
 - **Neovim** 0.5.0 or higher (recommended: 0.8.0+)
-- Support is planned for **Vim** 8.2+ -- currently not working
+- **Vim** 8.2+ with Python3 support (some limitations apply, see below)
 - **Kawa Code** desktop app ([download here](https://code-awareness.com))
+
+### Vim 8.2+ Support
+
+The plugin now supports Vim 8.2+ with the following requirements:
+- Python3 support compiled in (check with `:version` and look for `+python3`)
+- Text properties support (Vim 8.1+, check with `:echo exists('*prop_type_add')`)
+
+**Note**: Some features work differently in Vim compared to Neovim:
+- IPC uses Python3 sockets instead of native async I/O (slightly slower)
+- Highlighting uses text properties or signs (less sophisticated than extmarks)
+- No `in_fast_event()` concept (all operations are scheduled)
 
 ## Installation
 

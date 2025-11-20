@@ -764,3 +764,146 @@ This architecture provides a solid foundation for implementing Code Awareness in
 4. **Extensibility**: Clean APIs for future enhancements
 
 The modular design allows incremental development and testing, with clear interfaces between components. The Neovim-first approach leverages modern capabilities while maintaining Vim compatibility through a thin compatibility layer.
+
+## 14. Platform Abstraction Layer
+
+To support both Neovim and Vim 8.2+, kawa.vim uses a platform abstraction layer that provides a unified API while delegating to platform-specific implementations.
+
+### Architecture
+
+```
+┌────────────────────────────────────────────┐
+│      Core Plugin Modules                   │
+│  (init.lua, highlight.lua, ipc/*, etc.)    │
+└──────────────────┬─────────────────────────┘
+                   │
+         ┌─────────▼─────────┐
+         │  Platform Layer   │
+         │ (platform/init)   │
+         └──────────┬────────┘
+                    │
+        ┌───────────┴──────────┐
+        ▼                      ▼
+┌───────────────┐      ┌──────────────────┐
+│ Neovim Impl   │      │   Vim Impl       │
+│(platform/     │      │(platform/vim +   │
+│ neovim.lua)   │      │ autoload/*.vim)  │
+└───────────────┘      └──────────────────┘
+```
+
+### Platform Detection
+
+The platform layer automatically detects whether it's running on Neovim or Vim:
+
+```lua
+-- lua/code-awareness/platform/init.lua
+function M.detect()
+  if vim.fn.has("nvim") == 1 then
+    return "neovim"
+  else
+    return "vim"
+  end
+end
+```
+
+### Platform-Specific Implementations
+
+#### Neovim (platform/neovim.lua)
+
+Uses native Neovim APIs:
+- **IPC**: `vim.loop.new_pipe()` for Unix sockets
+- **Highlighting**: `vim.api.nvim_buf_set_extmark()` with extmarks
+- **Buffers**: `vim.api.nvim_buf_*` functions
+- **Autocmds**: `vim.api.nvim_create_autocmd()`
+- **JSON**: `vim.json.encode/decode()`
+
+#### Vim (platform/vim.lua + autoload/code_awareness.vim)
+
+Uses VimScript and Python3:
+- **IPC**: Python3 socket operations via `autoload/code_awareness.vim`
+- **Highlighting**: Text properties (`prop_type_add`, `prop_add`) or signs fallback
+- **Buffers**: VimScript functions (`bufname()`, `getbufline()`, etc.)
+- **Autocmds**: Traditional `autocmd` with group management
+- **JSON**: `json_encode/decode()` (Vim 8.0+)
+
+### API Coverage
+
+The platform layer provides these modules:
+
+#### IPC Module (`platform.ipc`)
+- `new_pipe()` - Create pipe/socket object
+- `connect(pipe, path, callback)` - Connect to socket
+- `write(pipe, data, callback)` - Write data
+- `read_start(pipe, callback)` - Start async reading
+- `read_stop(pipe)` - Stop reading
+- `close(pipe, callback)` - Close connection
+- `fs_stat(path)` - Check if file/socket exists
+
+#### Highlight Module (`platform.highlight`)
+- `create_namespace(name)` - Create namespace/ID
+- `set_hl(ns_id, name, opts)` - Define highlight group
+- `set_extmark(bufnr, ns_id, line, opts)` - Apply highlight
+- `clear_namespace(bufnr, ns_id)` - Clear highlights
+- `get_extmarks(bufnr, ns_id)` - Query highlights
+
+#### Buffer Module (`platform.buffer`)
+- `is_valid(bufnr)` - Check if buffer exists
+- `get_name(bufnr)` - Get file path
+- `get_lines(bufnr, start, end)` - Get buffer lines
+- `get_option(bufnr, name)` - Get buffer option
+- `line_count(bufnr)` - Get number of lines
+- `list()` - Get all buffer numbers
+
+#### Window Module (`platform.window`)
+- `get_current_buf()` - Get current buffer number
+- `get_cursor()` - Get cursor position
+
+#### Autocmd Module (`platform.autocmd`)
+- `create_group(name)` - Create autocommand group
+- `delete_group(id)` - Delete autocommand group
+- `create(opts)` - Create autocommand
+
+#### Util Module (`platform.util`)
+- `schedule(fn)` - Schedule function on main loop
+- `in_fast_event()` - Check if in fast event
+- `defer_fn(fn, timeout)` - Defer function execution
+- `timer_stop(id)` - Stop timer
+- `json_encode(data)` - Encode JSON
+- `json_decode(str)` - Decode JSON
+- `notify(msg, level)` - Show notification
+- `log_levels()` - Get log level constants
+
+### Usage Example
+
+Core plugin modules use the platform layer instead of calling `vim.api` directly:
+
+```lua
+-- Instead of:
+-- local socket = vim.loop.new_pipe()
+
+-- Use:
+local platform = require('code-awareness.platform').get_impl()
+local socket = platform.ipc.new_pipe()
+
+-- Instead of:
+-- vim.api.nvim_buf_set_extmark(bufnr, ns_id, line, 0, opts)
+
+-- Use:
+platform.highlight.set_extmark(bufnr, ns_id, line, opts)
+```
+
+This ensures the code works on both Neovim and Vim without conditional checks scattered throughout the codebase.
+
+### Vim-Specific Limitations
+
+When running on Vim 8.2+:
+
+1. **IPC Performance**: Python3 socket operations may be slightly slower than native Neovim libuv
+2. **Highlighting**: Text properties don't track line movements as well as extmarks; falls back to signs if text properties unavailable
+3. **Fast Events**: Vim doesn't have the concept of fast events, so `in_fast_event()` always returns false
+4. **Namespace**: Vim doesn't have namespaces for highlights; uses a global text property type instead
+
+Despite these limitations, the plugin provides the same core functionality on both platforms.
+
+---
+
